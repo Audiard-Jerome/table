@@ -20,6 +20,23 @@ body {
     margin-bottom: 20px;
 }
 
+#tableButtons label {
+    margin: 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#tableButtons label.selected {
+    background-color: #007bff;
+    color: white;
+}
+
 #timer, #score {
     margin-top: 10px;
+}
+
+#skipBtn {
+    margin-left: 10px;
 }

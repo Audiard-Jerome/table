@@ -10,15 +10,23 @@
     <div class="container">
         <h1>Réviser les tables de multiplication</h1>
         <div class="settings">
-            <label for="tables">Choisir les tables à réviser (1-10):</label>
-            <input type="number" id="tables" min="1" max="10" value="1">
+            <label for="tables">Choisir les tables à réviser:</label>
+            <div id="tableButtons"></div>
+            <label for="numQuestions">Nombre de questions:</label>
+            <input type="number" id="numQuestions" min="1" value="100">
+            <label for="timerMinutes">Minuteur (minutes):</label>
+            <input type="number" id="timerMinutes" min="1" value="5">
+            <label for="showTimer">Afficher le chronomètre:</label>
+            <input type="checkbox" id="showTimer" checked>
             <button id="startBtn">Commencer</button>
+            <div id="errorMessage" style="color: red; display: none;">Veuillez sélectionner au moins une table.</div>
         </div>
         <div class="quiz" id="quiz" style="display: none;">
             <div id="question"></div>
             <input type="number" id="answer" placeholder="Votre réponse">
             <button id="submitBtn">Soumettre</button>
-            <div id="timer">Temps restant: 5:00</div>
+            <button id="skipBtn">Passer</button>
+            <div id="timer" style="display: none;">Temps restant: 5:00</div>
             <div id="score">Score: 0</div>
         </div>
     </div>
