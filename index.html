@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Révision des tables de multiplication</title>
+    <!-- Lien vers le fichier CSS pour le style -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Tailwind CSS pour un style moderne et responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+<div class="container bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center space-y-6">
+    <!-- Titre de l'application -->
+    <h1 class="text-3xl font-bold text-gray-800 text-center">Révision des tables de multiplication</h1>
+
+    <!-- Section de configuration -->
+    <div id="settings-section" class="w-full space-y-4">
+        <div class="flex flex-col">
+            <label for="num-questions" class="text-gray-700 font-semibold mb-1">Nombre de questions :</label>
+            <input type="number" id="num-questions" value="10" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        
+        <div class="flex flex-col">
+            <label class="text-gray-700 font-semibold mb-2">Quelles tables réviser ?</label>
+            <div id="tables-container" class="grid grid-cols-5 gap-2">
+                <!-- Les cases à cocher seront insérées ici par le script -->
+            </div>
+        </div>
+        
+        <div class="flex flex-col">
+            <label for="time-limit" class="text-gray-700 font-semibold mb-1">Temps limite par question (secondes) :</label>
+            <input type="number" id="time-limit" value="10" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        
+        <button id="start-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-blue-700 transition duration-300 transform hover:scale-105">Démarrer</button>
+    </div>
+
+    <!-- Section du quiz (masquée par défaut) -->
+    <div id="quiz-section" class="w-full space-y-6 hidden">
+        <div class="flex justify-between items-center w-full text-gray-600 font-medium">
+            <div id="progress-text">Question 1/10</div>
+            <div id="timer-text" class="text-red-500 font-bold">10s</div>
+        </div>
+        
+        <div class="text-5xl font-extrabold text-gray-900 text-center" id="question-text">7 x 8 = ?</div>
+        
+        <input type="number" id="answer-input" class="w-full px-6 py-4 text-center text-3xl font-bold border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500" placeholder="Réponse..." autocomplete="off" />
+        
+        <button id="submit-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105">Valider</button>
+    </div>
+
+    <!-- Section des résultats (masquée par défaut) -->
+    <div id="results-section" class="w-full text-center space-y-4 hidden">
+        <h2 class="text-4xl font-bold text-gray-800">Terminé !</h2>
+        <p class="text-2xl text-gray-600">Votre score : <span id="score-text" class="font-extrabold text-blue-600">0/10</span></p>
+        <button id="restart-btn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-purple-700 transition duration-300 transform hover:scale-105">Recommencer</button>
+    </div>
+</div>
+
+<!-- Boîte de message pour les notifications (correct/incorrect) -->
+<div id="message-box" class="message-box"></div>
+
+<!-- Lien vers le fichier JavaScript pour la logique du jeu -->
+<script src="script.js" defer></script>
+</body>
+</html>
