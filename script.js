@@ -1,198 +1,246 @@
-// État de l'application
-const state = {
-    questions: [],
-    currentQuestionIndex: 0,
-    score: 0,
-    timer: null,
-    timeLimit: 10
-};
+(function() {
+    'use strict';
 
-// Références des éléments du DOM
-const settingsSection = document.getElementById('settings-section');
-const quizSection = document.getElementById('quiz-section');
-const resultsSection = document.getElementById('results-section');
-const startBtn = document.getElementById('start-btn');
-const submitBtn = document.getElementById('submit-btn');
-const restartBtn = document.getElementById('restart-btn');
+    // Constants for configuration and magic strings
+    const CONSTANTS = {
+        VIEWS: {
+            SETTINGS: 'settings-section',
+            QUIZ: 'quiz-section',
+            RESULTS: 'results-section'
+        },
+        MESSAGE_TYPES: {
+            CORRECT: 'correct',
+            INCORRECT: 'incorrect'
+        },
+        CSS_CLASSES: {
+            HIDDEN: 'hidden',
+            SHOW: 'show'
+        },
+        DEFAULT_NUM_QUESTIONS: 10,
+        DEFAULT_TIME_LIMIT: 10,
+        MAX_TABLE_NUMBER: 10
+    };
 
-const numQuestionsInput = document.getElementById('num-questions');
-const timeLimitInput = document.getElementById('time-limit');
-const tablesContainer = document.getElementById('tables-container');
+    // Application state
+    const state = {
+        questions: [],
+        currentQuestionIndex: 0,
+        score: 0,
+        timer: null,
+        timeLimit: CONSTANTS.DEFAULT_TIME_LIMIT
+    };
 
-const progressText = document.getElementById('progress-text');
-const timerText = document.getElementById('timer-text');
-const questionText = document.getElementById('question-text');
-const answerInput = document.getElementById('answer-input');
-const scoreText = document.getElementById('score-text');
+    // DOM Element References
+    const dom = {
+        settingsSection: document.getElementById(CONSTANTS.VIEWS.SETTINGS),
+        quizSection: document.getElementById(CONSTANTS.VIEWS.QUIZ),
+        resultsSection: document.getElementById(CONSTANTS.VIEWS.RESULTS),
+        startBtn: document.getElementById('start-btn'),
+        submitBtn: document.getElementById('submit-btn'),
+        restartBtn: document.getElementById('restart-btn'),
+        numQuestionsInput: document.getElementById('num-questions'),
+        timeLimitInput: document.getElementById('time-limit'),
+        tablesContainer: document.getElementById('tables-container'),
+        progressText: document.getElementById('progress-text'),
+        timerText: document.getElementById('timer-text'),
+        questionText: document.getElementById('question-text'),
+        answerInput: document.getElementById('answer-input'),
+        scoreText: document.getElementById('score-text'),
+        messageBox: document.getElementById('message-box')
+    };
 
-const messageBox = document.getElementById('message-box');
-
-// Générer les cases à cocher pour les tables
-for (let i = 1; i <= 10; i++) {
-    const label = document.createElement('label');
-    label.className = 'flex items-center space-x-2 bg-gray-200 hover:bg-gray-300 transition-colors p-2 rounded-xl cursor-pointer';
-    label.innerHTML = `
-        <input type="checkbox" name="tables" value="${i}" class="rounded-lg text-blue-600 focus:ring-blue-500">
-        <span class="text-gray-700 font-semibold">${i}</span>
-    `;
-    tablesContainer.appendChild(label);
-}
-
-// Événements
-startBtn.addEventListener('click', startQuiz);
-submitBtn.addEventListener('click', submitAnswer);
-restartBtn.addEventListener('click', restartQuiz);
-answerInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        submitAnswer();
-    }
-});
-
-/**
- * Génère une liste de questions de multiplication.
- * @param {number} numQuestions Le nombre total de questions.
- * @param {Array<number>} selectedTables Les tables de multiplication à utiliser.
- * @returns {Array<{a: number, b: number, answer: number}>} Un tableau de questions.
- */
-function generateQuestions(numQuestions, selectedTables) {
-    const questions = [];
-    for (let i = 0; i < numQuestions; i++) {
-        const a = selectedTables[Math.floor(Math.random() * selectedTables.length)];
-        const b = Math.floor(Math.random() * 10) + 1;
-        questions.push({ a, b, answer: a * b });
-    }
-    return questions;
-}
-
-/**
- * Affiche un message temporaire à l'écran.
- * @param {string} message Le texte du message.
- * @param {string} type Le type de message ('correct' ou 'incorrect').
- */
-function showMessage(message, type) {
-    messageBox.textContent = message;
-    messageBox.className = `message-box show ${type}`;
-    setTimeout(() => {
-        messageBox.className = 'message-box';
-    }, 1500); // Le message disparaît après 1.5 secondes
-}
-
-/**
- * Démarre le quiz.
- */
-function startQuiz() {
-    // Récupère les paramètres de l'utilisateur
-    const numQuestions = parseInt(numQuestionsInput.value);
-    const timeLimit = parseInt(timeLimitInput.value);
-    
-    // Récupère les tables sélectionnées
-    const selectedTablesElements = document.querySelectorAll('input[name="tables"]:checked');
-    const selectedTables = Array.from(selectedTablesElements).map(el => parseInt(el.value));
-
-    // Validation des entrées
-    if (numQuestions < 1 || timeLimit < 1) {
-        showMessage("Veuillez entrer des valeurs positives.", "incorrect");
-        return;
-    }
-    if (selectedTables.length === 0) {
-        showMessage("Veuillez sélectionner au moins une table.", "incorrect");
-        return;
+    /**
+     * Shows a specific view (settings, quiz, or results) and hides the others.
+     * @param {string} viewToShow The ID of the view to show.
+     */
+    function showView(viewToShow) {
+        Object.values(CONSTANTS.VIEWS).forEach(viewId => {
+            const viewElement = document.getElementById(viewId);
+            if (viewId === viewToShow) {
+                viewElement.classList.remove(CONSTANTS.CSS_CLASSES.HIDDEN);
+            } else {
+                viewElement.classList.add(CONSTANTS.CSS_CLASSES.HIDDEN);
+            }
+        });
     }
 
-    // Met à jour l'état du jeu
-    state.questions = generateQuestions(numQuestions, selectedTables);
-    state.currentQuestionIndex = 0;
-    state.score = 0;
-    state.timeLimit = timeLimit;
+    /**
+     * Generates the checkboxes for selecting multiplication tables.
+     */
+    function createTableCheckboxes() {
+        for (let i = 1; i <= CONSTANTS.MAX_TABLE_NUMBER; i++) {
+            const checkboxId = `table-${i}`;
+            const label = document.createElement('label');
+            label.className = 'flex items-center space-x-2 bg-gray-200 hover:bg-gray-300 transition-colors p-2 rounded-xl cursor-pointer';
+            label.setAttribute('for', checkboxId);
 
-    // Met à jour l'interface
-    settingsSection.classList.add('hidden');
-    resultsSection.classList.add('hidden');
-    quizSection.classList.remove('hidden');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'tables';
+            checkbox.value = i;
+            checkbox.id = checkboxId;
+            checkbox.className = 'rounded-lg text-blue-600 focus:ring-blue-500';
 
-    startQuestion();
-}
+            const span = document.createElement('span');
+            span.className = 'text-gray-700 font-semibold';
+            span.textContent = i;
 
-/**
- * Démarre une nouvelle question.
- */
-function startQuestion() {
-    const question = state.questions[state.currentQuestionIndex];
-    
-    // Met à jour le texte de la question et la progression
-    questionText.textContent = `${question.a} x ${question.b} = ?`;
-    progressText.textContent = `Question ${state.currentQuestionIndex + 1}/${state.questions.length}`;
-    answerInput.value = '';
-    answerInput.focus();
-
-    // Réinitialise et démarre le timer
-    let timeLeft = state.timeLimit;
-    timerText.textContent = `${timeLeft}s`;
-    clearInterval(state.timer);
-    state.timer = setInterval(() => {
-        timeLeft--;
-        timerText.textContent = `${timeLeft}s`;
-        if (timeLeft <= 0) {
-            // Si le temps est écoulé, la réponse est incorrecte
-            showMessage(`Temps écoulé ! La réponse était ${question.answer}.`, "incorrect");
-            nextQuestion();
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            dom.tablesContainer.appendChild(label);
         }
-    }, 1000);
-}
-
-/**
- * Valide la réponse de l'utilisateur.
- */
-function submitAnswer() {
-    const question = state.questions[state.currentQuestionIndex];
-    const userAnswer = parseInt(answerInput.value);
-    clearInterval(state.timer);
-
-    if (userAnswer === question.answer) {
-        state.score++;
-        showMessage("Correct !", "correct");
-    } else {
-        showMessage(`Faux ! La bonne réponse était ${question.answer}.`, "incorrect");
     }
-    
-    // Attendre un peu avant de passer à la question suivante
-    setTimeout(() => {
-        nextQuestion();
-    }, 1500);
-}
 
-/**
- * Passe à la question suivante ou termine le quiz.
- */
-function nextQuestion() {
-    state.currentQuestionIndex++;
-    if (state.currentQuestionIndex < state.questions.length) {
+    /**
+     * Displays a temporary message on the screen.
+     * @param {string} message The message text.
+     * @param {string} type The message type ('correct' or 'incorrect').
+     */
+    function showMessage(message, type) {
+        dom.messageBox.textContent = message;
+        dom.messageBox.className = `message-box ${CONSTANTS.CSS_CLASSES.SHOW} ${type}`;
+        setTimeout(() => {
+            dom.messageBox.className = 'message-box';
+        }, 1500);
+    }
+
+    /**
+     * Generates a list of multiplication questions.
+     * @param {number} numQuestions The total number of questions.
+     * @param {Array<number>} selectedTables The multiplication tables to use.
+     * @returns {Array<{a: number, b: number, answer: number}>} An array of questions.
+     */
+    function generateQuestions(numQuestions, selectedTables) {
+        const questions = [];
+        for (let i = 0; i < numQuestions; i++) {
+            const a = selectedTables[Math.floor(Math.random() * selectedTables.length)];
+            const b = Math.floor(Math.random() * 10) + 1;
+            questions.push({ a, b, answer: a * b });
+        }
+        return questions;
+    }
+
+    /**
+     * Starts a new question.
+     */
+    function startQuestion() {
+        const question = state.questions[state.currentQuestionIndex];
+        dom.questionText.textContent = `${question.a} x ${question.b} = ?`;
+        dom.progressText.textContent = `Question ${state.currentQuestionIndex + 1}/${state.questions.length}`;
+        dom.answerInput.value = '';
+        dom.answerInput.focus();
+
+        let timeLeft = state.timeLimit;
+        dom.timerText.textContent = `${timeLeft}s`;
+        clearInterval(state.timer);
+        state.timer = setInterval(() => {
+            timeLeft--;
+            dom.timerText.textContent = `${timeLeft}s`;
+            if (timeLeft <= 0) {
+                showMessage(`Temps écoulé ! La réponse était ${question.answer}.`, CONSTANTS.MESSAGE_TYPES.INCORRECT);
+                nextQuestion();
+            }
+        }, 1000);
+    }
+
+    /**
+     * Moves to the next question or ends the quiz.
+     */
+    function nextQuestion() {
+        state.currentQuestionIndex++;
+        if (state.currentQuestionIndex < state.questions.length) {
+            startQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    /**
+     * Handles the submission of an answer.
+     */
+    function submitAnswer() {
+        const question = state.questions[state.currentQuestionIndex];
+        const userAnswer = parseInt(dom.answerInput.value, 10);
+        clearInterval(state.timer);
+
+        if (userAnswer === question.answer) {
+            state.score++;
+            showMessage("Correct !", CONSTANTS.MESSAGE_TYPES.CORRECT);
+        } else {
+            showMessage(`Faux ! La bonne réponse était ${question.answer}.`, CONSTANTS.MESSAGE_TYPES.INCORRECT);
+        }
+
+        setTimeout(nextQuestion, 1500);
+    }
+
+    /**
+     * Displays the final results.
+     */
+    function showResults() {
+        dom.scoreText.textContent = `${state.score}/${state.questions.length}`;
+        showView(CONSTANTS.VIEWS.RESULTS);
+    }
+
+    /**
+     * Starts the quiz after validating settings.
+     */
+    function startQuiz() {
+        const numQuestions = parseInt(dom.numQuestionsInput.value, 10);
+        const timeLimit = parseInt(dom.timeLimitInput.value, 10);
+        const selectedTables = Array.from(document.querySelectorAll('input[name="tables"]:checked'))
+            .map(el => parseInt(el.value, 10));
+
+        if (numQuestions < 1 || timeLimit < 1) {
+            showMessage("Veuillez entrer des valeurs positives.", CONSTANTS.MESSAGE_TYPES.INCORRECT);
+            return;
+        }
+        if (selectedTables.length === 0) {
+            showMessage("Veuillez sélectionner au moins une table.", CONSTANTS.MESSAGE_TYPES.INCORRECT);
+            return;
+        }
+
+        state.questions = generateQuestions(numQuestions, selectedTables);
+        state.currentQuestionIndex = 0;
+        state.score = 0;
+        state.timeLimit = timeLimit;
+
+        showView(CONSTANTS.VIEWS.QUIZ);
         startQuestion();
-    } else {
-        showResults();
     }
-}
 
-/**
- * Affiche les résultats du quiz.
- */
-function showResults() {
-    quizSection.classList.add('hidden');
-    resultsSection.classList.remove('hidden');
-    scoreText.textContent = `${state.score}/${state.questions.length}`;
-}
+    /**
+     * Resets the quiz to the settings screen.
+     */
+    function restartQuiz() {
+        showView(CONSTANTS.VIEWS.SETTINGS);
+        state.currentQuestionIndex = 0;
+        state.score = 0;
+        state.questions = [];
+    }
 
-/**
- * Réinitialise l'application pour recommencer.
- */
-function restartQuiz() {
-    resultsSection.classList.add('hidden');
-    settingsSection.classList.remove('hidden');
-    // Réinitialisation de l'état (optionnel car il est recréé au démarrage)
-    state.currentQuestionIndex = 0;
-    state.score = 0;
-    state.questions = [];
-}
+    /**
+     * Initializes the application.
+     */
+    function init() {
+        // Set default values from constants
+        dom.numQuestionsInput.value = CONSTANTS.DEFAULT_NUM_QUESTIONS;
+        dom.timeLimitInput.value = CONSTANTS.DEFAULT_TIME_LIMIT;
 
-// L'écouteur DOMContentLoaded a été retiré car le script est chargé avec l'attribut `defer` dans le HTML.
-// Cela garantit que le script s'exécute après le chargement complet du DOM.
+        // Add event listeners
+        dom.startBtn.addEventListener('click', startQuiz);
+        dom.submitBtn.addEventListener('click', submitAnswer);
+        dom.restartBtn.addEventListener('click', restartQuiz);
+        dom.answerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitAnswer();
+            }
+        });
+
+        createTableCheckboxes();
+        showView(CONSTANTS.VIEWS.SETTINGS);
+    }
+
+    // Start the application
+    init();
+
+})();
